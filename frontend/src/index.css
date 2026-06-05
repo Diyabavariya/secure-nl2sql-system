@@ -1,0 +1,174 @@
+/* src/index.css
+ * =============
+ * PURPOSE: Global base styles that Tailwind doesn't handle.
+ *
+ * This is where you put:
+ *   1. Tailwind's base/components/utilities directives (required)
+ *   2. Custom CSS classes that can't easily be done with Tailwind utilities
+ *      (e.g., glass-card with backdrop-filter, scrollbar styling)
+ *   3. Keyframe animations
+ *
+ * RULE: Keep this file small. Prefer Tailwind classes in JSX over adding
+ * new CSS here. Only add here when Tailwind can't do it cleanly.
+ */
+
+/* ── Tailwind Base Layers ───────────────────────────────────────────────── */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Base HTML Defaults ─────────────────────────────────────────────────── */
+@layer base {
+  /* Apply font smoothing globally for crisp text on dark backgrounds */
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    background-color: #050505;
+    color: #e5e2e1;
+    font-family: 'Geist', sans-serif;
+    overflow: hidden; /* No page scroll — dashboard is a fixed app shell */
+    height: 100vh;
+  }
+
+  /* Material Symbols icon variation settings (required by Google Fonts) */
+  .material-symbols-outlined {
+    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  }
+}
+
+/* ── Reusable Component Styles ──────────────────────────────────────────── */
+@layer components {
+  /*
+   * .glass-card
+   * -----------
+   * Glassmorphism effect: semi-transparent dark background + blur + border.
+   * Used on cards, panels, and modals throughout the UI.
+   * backdrop-filter is NOT a Tailwind class that supports dynamic values cleanly,
+   * so it lives here.
+   */
+  .glass-card {
+    background: rgba(18, 18, 18, 0.7);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px); /* Safari support */
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-top-color: rgba(255, 255, 255, 0.15);
+  }
+
+  /*
+   * .neon-glow-primary
+   * ------------------
+   * Electric blue glow for primary action buttons.
+   */
+  .neon-glow-primary {
+    box-shadow: 0 0 12px rgba(0, 102, 255, 0.4);
+    transition: box-shadow 0.2s ease;
+  }
+
+  .neon-glow-primary:hover {
+    box-shadow: 0 0 24px rgba(0, 102, 255, 0.65);
+  }
+
+  /*
+   * .electric-glow
+   * --------------
+   * SVG/icon drop-shadow glow effect.
+   */
+  .electric-glow {
+    filter: drop-shadow(0 0 8px rgba(0, 102, 255, 0.5));
+  }
+
+  /*
+   * .neural-bg
+   * ----------
+   * The radial gradient background for the login page right pane.
+   */
+  .neural-bg {
+    background: radial-gradient(circle at center, #0a0a0a 0%, #050505 100%);
+  }
+
+  /*
+   * .code-block
+   * -----------
+   * Monospace container for SQL output.
+   */
+  .code-block {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    line-height: 1.6;
+    background: rgba(10, 10, 10, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 0.5rem;
+    padding: 1rem;
+    overflow-x: auto;
+  }
+}
+
+/* ── Utilities ──────────────────────────────────────────────────────────── */
+@layer utilities {
+  /* Custom scrollbar — applied to any scrollable container */
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 5px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+  }
+}
+
+/* ── Keyframe Animations ────────────────────────────────────────────────── */
+
+/* Pulsing cyan dot (used in status indicators) */
+@keyframes pulse-cyan {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50%       { transform: scale(1.6); opacity: 0.5; }
+}
+
+.status-dot-active {
+  width: 6px;
+  height: 6px;
+  background: #00eeff;
+  border-radius: 50%;
+  display: inline-block;
+  box-shadow: 0 0 4px #00eeff;
+  animation: pulse-cyan 2s infinite ease-in-out;
+}
+
+/* Fade-in for SQL output appearing after a query */
+@keyframes fade-in-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.35s ease forwards;
+}
+
+/* Shimmer loading skeleton */
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.animate-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.03) 25%,
+    rgba(255, 255, 255, 0.08) 50%,
+    rgba(255, 255, 255, 0.03) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
