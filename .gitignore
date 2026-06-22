@@ -110,7 +110,7 @@ db_backups/
 
 # SQLite database files — binary, large, and may contain sensitive data.
 # Commit an Alembic migration + seed script instead of the DB file itself.
-*.db
+#*.db
 *.sqlite
 *.sqlite3
 
