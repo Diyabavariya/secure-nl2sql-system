@@ -1,30 +1,38 @@
 # QueryShield AI
 
+## Live Demo
+
+Frontend: [https://secure-nl2sql-system.vercel.app](https://secure-nl2sql-system.vercel.app/)
+
+Backend API: [https://secure-nl2sql-system.onrender.com](https://secure-nl2sql-system.onrender.com/)
+
+API Documentation: [https://secure-nl2sql-system.onrender.com/docs](https://secure-nl2sql-system.onrender.com/docs)
+
 QueryShield AI is a secure, role-aware **Natural Language to SQL (NL→SQL)** system that enables users to query databases in plain English without exposing raw database access or compromising security. Powered by the Groq LLM (Llama 3) and a FastAPI + React architecture, QueryShield AI implements multi-layered security gates—including **intent validation**, **strict SQL structure checks**, **JWT authentication**, and **Role-Based Access Control (RBAC)**—to deliver safe and controlled database intelligence.
 
 ---
 
 ## 🚀 Overview
-Traditional text-to-SQL solutions trust the LLM's generated SQL implicitly. This creates critical vulnerabilities, including prompt injection (altering database state), database extraction attacks (unauthorized data access), and privilege escalation. 
+Traditional text-to-SQL systems often trust LLM-generated SQL too early. That introduces serious risk, including prompt injection, unauthorized data exposure, and privilege escalation.
 
-QueryShield AI acts as a zero-trust intermediary. It validates the user's intent before sending it to the LLM, validates the generated SQL syntax and permissions after receiving it, and enforces server-side Role-Based Access Control (RBAC) to ensure that users only query tables and columns aligned with their designated organizational role.
+QueryShield AI is designed as a zero-trust intermediary. It validates user intent before the request reaches the model, verifies the generated SQL before execution, and enforces server-side Role-Based Access Control (RBAC) so each user can only access tables and columns aligned with their assigned role.
 
 ---
 
 ## 🎯 Key Features
-*   **Natural Language to SQL translation:** Powered by Groq LLM (`llama-3.3-70b-versatile`) with schema-aware system prompts and deterministic generation parameters.
-*   **Zero-Trust SQL Validation:** Blocks DDL (data definition) and DML (data modification) queries. Only safe `SELECT` read-only operations are executed.
-*   **Server-Side RBAC enforcement:** Dynamically filters and validates generated SQL queries to ensure tables and columns match the user's role permissions (e.g., *Sales* can see customer locations but not customer personal identifiers; *Viewer* cannot execute queries).
-*   **Intent Validation Gate:** Scans incoming English prompts for dangerous system instructions, prompt injection attempts, or out-of-scope queries before querying the LLM.
-*   **Secure JWT Sessions:** Authenticates users via cryptographic JWT tokens. Session state is rehydrated safely client-side.
-*   **Interactive React Dashboard:** Displays real-time validation gate logs, SQL output, interactive query results table, and an active security Threat Meter.
-*   **Query History & State:** Session-bound history panel with visual status badges (Success, Blocked, Access Denied) for audit trailing.
+*   **Natural language to SQL translation:** Uses the Groq LLM (`llama-3.3-70b-versatile`) with schema-aware prompts and deterministic generation settings.
+*   **Zero-trust SQL validation:** Blocks DDL and DML queries so only safe, read-only `SELECT` operations are executed.
+*   **Server-side RBAC enforcement:** Validates generated SQL against role permissions so tables and columns stay aligned with each user's access level.
+*   **Intent validation gate:** Screens incoming prompts for dangerous instructions, prompt injection attempts, and out-of-scope requests before they reach the model.
+*   **Secure JWT sessions:** Uses cryptographic JWT tokens for authenticated sessions and safe client-side rehydration.
+*   **Interactive React dashboard:** Shows validation logs, SQL output, query results, and an active security threat meter in one place.
+*   **Query history and state:** Maintains session-scoped history with visual status badges for success, blocked, and access-denied actions.
 
 ---
 
 ## 📐 Architecture
 
-The QueryShield AI pipeline processes requests through a zero-trust model:
+The QueryShield AI pipeline processes each request through a zero-trust model:
 
 ```
         User (NL Query Prompt)
@@ -73,9 +81,18 @@ The QueryShield AI pipeline processes requests through a zero-trust model:
 *   **Uvicorn** — Lightning-fast ASGI production web server.
 
 ### AI & Security
-*   **Groq LLM API** — Blazing-fast inference utilizing state-of-the-art Llama 3 models.
-*   **PyJWT & Passlib** — Secure JWT generation, validation, and password cryptography (Bcrypt).
+*   **Groq LLM API** — Fast inference using Llama 3.3 for schema-aware text-to-SQL generation.
+*   **PyJWT & Passlib** — Secure JWT generation, validation, and password hashing with Bcrypt.
 *   **Security Gates** — Custom Python sanitization and SQL abstract syntax tree (AST) scanning.
+
+## Deployment
+
+This project is deployed as a full-stack production application with separate hosting for the frontend, backend, AI inference, and database layer:
+
+*   **Frontend:** Vercel
+*   **Backend:** Render
+*   **AI Model:** Groq API (Llama 3.3 70B)
+*   **Database:** SQLite
 
 ---
 
@@ -117,6 +134,8 @@ Interactive session history tracker showing the log of all processed, blocked, a
 git clone https://github.com/your-username/secure-nl2sql-system.git
 cd secure-nl2sql-system
 ```
+
+If you want to explore the deployed application first, open the live frontend at [https://secure-nl2sql-system.vercel.app](https://secure-nl2sql-system.vercel.app/) and the production API at [https://secure-nl2sql-system.onrender.com](https://secure-nl2sql-system.onrender.com/).
 
 ---
 
@@ -188,7 +207,7 @@ From the **project root directory** (with virtual environment active):
 ```bash
 uvicorn backend.main:app --reload
 ```
-The FastAPI documentation and OpenAPI page will be available at `http://127.0.0.1:8000/docs`.
+The FastAPI documentation and OpenAPI page will be available locally at `http://127.0.0.1:8000/docs`. For the deployed API documentation, use [https://secure-nl2sql-system.onrender.com/docs](https://secure-nl2sql-system.onrender.com/docs).
 
 ### Running the Frontend
 From the `frontend/` directory:
@@ -199,7 +218,7 @@ npm.cmd run dev
 # On macOS/Linux/Other:
 npm run dev
 ```
-Open your browser and navigate to `http://localhost:5173`.
+Open your browser and navigate to `http://localhost:5173` for local development, or use the deployed frontend at [https://secure-nl2sql-system.vercel.app](https://secure-nl2sql-system.vercel.app/).
 
 ---
 
@@ -243,7 +262,8 @@ secure-nl2sql-system/
 │   ├── routes/            # FastAPI routers (auth, query processing, meta)
 │   ├── services/          # Core logic (LLM, SQL execution, RBAC, validations)
 │   ├── utils/             # Helper logs and formatted consoles
-│   └── olist_*.csv        # Brazilian E-Commerce dataset source files (ignored)
+│   ├── main.py            # FastAPI application entry point
+│   └── olist_*.csv        # Brazilian E-Commerce dataset source files (used for local seeding)
 ├── frontend/
 │   ├── src/
 │   │   ├── api/           # Axios calls to backend endpoints
@@ -255,15 +275,16 @@ secure-nl2sql-system/
 │   └── package.json       # Frontend dependencies
 ├── requirements.txt       # Backend dependencies
 ├── setup_db.py            # Database bootstrapping script
-└── .gitignore             # Strict git publication exclusions
+└── README.md              # Project overview, setup, and deployment details
 ```
 
 ---
 
 ## 🎓 Resume Highlights & Concepts Demonstrated
 
-*   **Zero-Trust Security Design:** Implemented multi-layered defense-in-depth security (Intent sanitization, SQL AST token validation, and API-level authorization).
-*   **Role-Based Access Control (RBAC):** Built a server-side permission verification engine that extracts table/column nodes from query code and checks them against user-role mappings.
-*   **Modern AI Integration:** Utilized Groq LLM API with structured prompt engineering to build a reliable Text-to-SQL translation engine operating at temperature `0.0`.
-*   **Token-Based Authentication:** Developed a secure authentication architecture using JWT tokens, Passlib Bcrypt password hashing, and Axios request interceptors.
-*   **Full-Stack Development:** Connected a React SPA (built with Vite and Tailwind) to a FastAPI backend serving a SQLite relational database.
+*   **Zero-trust security design:** Implemented defense-in-depth controls across intent sanitization, SQL AST validation, and API-level authorization.
+*   **Role-based access control (RBAC):** Built a server-side permission engine that extracts table and column nodes from queries and validates them against user-role mappings.
+*   **Modern AI integration:** Used the Groq LLM API with structured prompt engineering to deliver reliable Text-to-SQL generation at temperature `0.0`.
+*   **Token-based authentication:** Developed a secure authentication flow using JWT tokens, Passlib Bcrypt password hashing, and Axios request interceptors.
+*   **Full-stack development:** Connected a React SPA built with Vite and Tailwind CSS to a FastAPI backend serving a SQLite relational database.
+*   **Deployment experience:** Deployed the frontend on Vercel and the backend API on Render, with production-ready URLs, environment configuration, and documentation aligned for end-user access and recruiter review.
