@@ -140,6 +140,26 @@ export default function LoginPage() {
     }
   }, [roleOptions]);
 
+  useEffect(() => {
+    const { body } = document;
+    const previousOverflowX = body.style.overflowX;
+    const previousOverflowY = body.style.overflowY;
+    const previousHeight = body.style.height;
+    const previousMinHeight = body.style.minHeight;
+
+    body.style.overflowX = 'hidden';
+    body.style.overflowY = 'auto';
+    body.style.height = 'auto';
+    body.style.minHeight = '100vh';
+
+    return () => {
+      body.style.overflowX = previousOverflowX;
+      body.style.overflowY = previousOverflowY;
+      body.style.height = previousHeight;
+      body.style.minHeight = previousMinHeight;
+    };
+  }, []);
+
   function switchTab(tab) {
     setActiveTab(tab);
     setFormError('');
@@ -190,14 +210,14 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="flex min-h-screen bg-background overflow-hidden">
-      <section className="w-full lg:w-[480px] xl:w-[540px] flex flex-col justify-between p-8 md:p-12 z-10 bg-background">
+    <main className="flex min-h-screen bg-background overflow-x-hidden overflow-y-auto">
+      <section className="w-full lg:w-[480px] xl:w-[540px] flex flex-col justify-start lg:justify-between gap-6 lg:gap-0 p-6 sm:p-8 md:p-12 z-10 bg-background">
         <div className="flex items-center gap-3">
           <ShieldLogo size={40} />
           <span className="font-bold text-primary tracking-tight text-xl">QueryShield AI</span>
         </div>
 
-        <GlassCard className="p-8 md:p-10 rounded-xl my-8">
+        <GlassCard className="p-6 sm:p-8 md:p-10 rounded-xl my-6 sm:my-8">
           <header className="mb-6">
             <h1 className="font-headline-lg text-headline-lg mb-1 text-on-surface">
               {activeTab === 'login' ? 'Welcome Back' : 'Create Account'}
