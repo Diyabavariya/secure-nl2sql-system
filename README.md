@@ -131,7 +131,7 @@ Interactive session history tracker showing the log of all processed, blocked, a
 
 ### Step 1: Clone and Initialize
 ```bash
-git clone https://github.com/your-username/secure-nl2sql-system.git
+git clone https://github.com/Diyabavariya/secure-nl2sql-system.git
 cd secure-nl2sql-system
 ```
 
