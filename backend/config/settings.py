@@ -28,7 +28,7 @@ class Settings:
     # Set GROQ_API_KEY in your .env file (see .env.example).
     LLM_API_URL: str = "https://api.groq.com/openai/v1/chat/completions"
     LLM_API_KEY: str = os.getenv("GROQ_API_KEY", "")
-    LLM_MODEL = "llama-3.3-70b-versatile"
+    LLM_MODEL = "openai/gpt-oss-120b"
     LLM_TEMPERATURE: float = 0       # 0 = deterministic SQL output
     LLM_TIMEOUT_SECONDS: int = 15
 
