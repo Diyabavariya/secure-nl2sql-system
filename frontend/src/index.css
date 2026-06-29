@@ -29,8 +29,12 @@
     background-color: #050505;
     color: #e5e2e1;
     font-family: 'Geist', sans-serif;
-    overflow: hidden; /* No page scroll — dashboard is a fixed app shell */
-    height: 100vh;
+    /* MOBILE FIX: Removed `overflow: hidden` and `height: 100vh`.
+     * The previous values blocked all scrolling on mobile devices.
+     * The dashboard layout now uses its own scroll container (main element)
+     * so the body can remain scrollable for smaller viewports.      */
+    min-height: 100vh;
+    overflow-x: hidden;
   }
 
   /* Material Symbols icon variation settings (required by Google Fonts) */
@@ -104,6 +108,21 @@
     padding: 1rem;
     overflow-x: auto;
   }
+
+  /*
+   * .sidebar-overlay
+   * ----------------
+   * Dark translucent backdrop shown behind the sidebar on mobile when open.
+   * Clicking it closes the sidebar.
+   */
+  .sidebar-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(2px);
+    z-index: 40;
+    animation: fade-in 0.2s ease forwards;
+  }
 }
 
 /* ── Utilities ──────────────────────────────────────────────────────────── */
@@ -171,4 +190,20 @@
   );
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
+}
+
+/* Fade in (for overlay) */
+@keyframes fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* Sidebar slide-in from left on mobile */
+@keyframes slide-in-left {
+  from { transform: translateX(-100%); }
+  to   { transform: translateX(0); }
+}
+
+.sidebar-slide-in {
+  animation: slide-in-left 0.25s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }

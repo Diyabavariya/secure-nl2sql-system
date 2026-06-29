@@ -26,21 +26,23 @@ export default function QueryPanel({ onSubmit, loading }) {
 
   return (
     <GlassCard className="p-6 rounded-xl">
-      <div className="flex items-center justify-between mb-5">
-        <div className="flex items-center gap-2">
-          <span className="material-symbols-outlined text-primary text-[20px]">
+      <div className="flex flex-wrap items-center gap-2 mb-5">
+        <div className="flex items-center gap-2 flex-1 min-w-0">
+          <span className="material-symbols-outlined text-primary text-[20px] flex-shrink-0">
             auto_awesome
           </span>
-          <h3 className="text-on-surface font-semibold text-base">
+          <h3 className="text-on-surface font-semibold text-base truncate">
             Natural Language Query
           </h3>
         </div>
-        <span className={`rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-wide ${getRoleBadgeClass(role)}`}>
-          {getRoleLabel(role)}
-        </span>
-        <span className="font-code-sm text-code-sm text-on-surface-variant">
-          {question.length} chars
-        </span>
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <span className={`rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-wide ${getRoleBadgeClass(role)}`}>
+            {getRoleLabel(role)}
+          </span>
+          <span className="font-code-sm text-code-sm text-on-surface-variant">
+            {question.length}c
+          </span>
+        </div>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">

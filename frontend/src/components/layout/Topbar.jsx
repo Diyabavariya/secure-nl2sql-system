@@ -2,23 +2,49 @@ import React from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { getRoleBadgeClass, getRoleLabel } from '../../config/rbac';
 
-export default function Topbar({ title = 'Dashboard', isOnline = true }) {
+/**
+ * Topbar
+ *
+ * Props:
+ *  title    — current page title
+ *  isOnline — whether backend is reachable
+ *  onMenuOpen — called when the hamburger button is tapped on mobile
+ *
+ * Removed (were non-functional UI decoration):
+ *  • Decorative search bar
+ *  • Notifications bell with fake badge
+ */
+export default function Topbar({ title = 'Dashboard', isOnline = true, onMenuOpen }) {
   const { role } = useAuth();
 
   return (
-    <header className="
-      fixed top-0 left-[280px] right-0 h-16
-      bg-surface/80 backdrop-blur-xl
-      border-b border-white/5
-      flex items-center justify-between
-      px-8 z-40
-    ">
-      <div className="flex items-center gap-4">
+    <header
+      className="
+        fixed top-0 right-0 h-16 z-40
+        left-0 md:left-[280px]
+        bg-surface/80 backdrop-blur-xl
+        border-b border-white/5
+        flex items-center justify-between
+        px-4 md:px-8
+      "
+    >
+      {/* ── Left: hamburger (mobile) + page title + status ────────────── */}
+      <div className="flex items-center gap-3">
+        {/* Hamburger — only shown on mobile (hidden on md+) */}
+        <button
+          id="sidebar-toggle-btn"
+          onClick={onMenuOpen}
+          className="md:hidden text-on-surface-variant hover:text-on-surface transition-colors"
+          aria-label="Open menu"
+        >
+          <span className="material-symbols-outlined text-[24px]">menu</span>
+        </button>
+
         <h2 className="text-on-surface font-semibold text-lg tracking-tight">
           {title}
         </h2>
 
-        <div className="flex items-center gap-2">
+        <div className="hidden sm:flex items-center gap-2">
           {isOnline
             ? <span className="status-dot-active" />
             : <span className="w-1.5 h-1.5 rounded-full bg-error inline-block" />
@@ -29,25 +55,9 @@ export default function Topbar({ title = 'Dashboard', isOnline = true }) {
         </div>
       </div>
 
-      <div className="flex items-center gap-4">
-        <div className="relative hidden md:flex items-center">
-          <span className="material-symbols-outlined absolute left-3 text-on-surface-variant text-[18px]">
-            search
-          </span>
-          <input
-            id="topbar-search"
-            type="text"
-            placeholder="Search queries…"
-            className="
-              pl-9 pr-4 py-2 w-56 text-body-sm
-              bg-surface-container-low border border-outline-variant rounded-full
-              text-on-surface placeholder:text-on-surface-variant/50
-              focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/30
-              transition-all
-            "
-          />
-        </div>
-
+      {/* ── Right: role badge + RBAC indicator ───────────────────────── */}
+      {/* Removed: decorative search bar, non-functional notifications bell */}
+      <div className="flex items-center gap-2 sm:gap-4">
         <div className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-white/5">
           <span className="material-symbols-outlined text-primary text-[15px]">
             verified_user
@@ -57,7 +67,7 @@ export default function Topbar({ title = 'Dashboard', isOnline = true }) {
           </span>
         </div>
 
-        <div className="flex items-center gap-2 px-3 py-1.5 bg-surface-container-low border border-outline-variant rounded-full">
+        <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-surface-container-low border border-outline-variant rounded-full">
           <span className="material-symbols-outlined text-on-surface-variant text-[15px]">
             security
           </span>
@@ -65,11 +75,6 @@ export default function Topbar({ title = 'Dashboard', isOnline = true }) {
             RBAC ACTIVE
           </span>
         </div>
-
-        <button className="relative text-on-surface-variant hover:text-on-surface transition-colors">
-          <span className="material-symbols-outlined text-[22px]">notifications</span>
-          <span className="absolute top-0 right-0 w-2 h-2 bg-error rounded-full border border-surface" />
-        </button>
       </div>
     </header>
   );

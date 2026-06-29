@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import { submitQuery } from '../api/queryApi';
+import { useAuth } from '../context/AuthContext';
 
 function parseSecurityStatus(response) {
   if (!response) {
@@ -20,6 +21,12 @@ function parseSecurityStatus(response) {
 }
 
 export function useQueryShield() {
+  // ROOT CAUSE FIX: Read the authenticated user's role from AuthContext.
+  // The backend's QueryResponse model does not include 'role' (by design —
+  // roles belong in the JWT, not in query responses). We inject it here on
+  // the frontend so every history entry carries the correct role label.
+  const { role } = useAuth();
+
   const [loading,        setLoading]        = useState(false);
   const [result,         setResult]         = useState(null);
   const [history,        setHistory]        = useState([]);
@@ -39,7 +46,14 @@ export function useQueryShield() {
       const data = await submitQuery(question);
       setResult(data);
       setSecurityStatus(parseSecurityStatus(data));
-      setHistory((prev) => [{ ...data, timestamp: new Date().toISOString() }, ...prev.slice(0, 49)]);
+
+      // Inject the current user's role (from JWT/AuthContext) into the history
+      // entry. Previously, 'role' was missing from the response object, causing
+      // QueryHistory to display "Unknown Role" for every entry.
+      setHistory((prev) => [
+        { ...data, role, timestamp: new Date().toISOString() },
+        ...prev.slice(0, 49),
+      ]);
     } catch (err) {
       const errorMessage = err.response?.data?.detail || err.message || 'Network error — is the backend running?';
       setNetworkError(errorMessage);
@@ -47,7 +61,9 @@ export function useQueryShield() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  // Include 'role' in the dependency array so the latest role is always captured.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [role]);
 
   const clearResult = useCallback(() => {
     setResult(null);
@@ -57,4 +73,3 @@ export function useQueryShield() {
 
   return { loading, result, history, securityStatus, networkError, submitQuestion, clearResult };
 }
-

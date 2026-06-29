@@ -48,17 +48,18 @@ function InputField({ id, icon, type = 'text', value, onChange, placeholder, req
 }
 
 function Alert({ type, message }) {
-  const isError = type === 'error';
+  const styles = {
+    error:   'bg-error/10 border-error/20 text-error',
+    success: 'bg-emerald-500/10 border-emerald-500/20 text-emerald-300',
+    warning: 'bg-amber-500/10 border-amber-500/20 text-amber-300',
+  };
+  const icons = { error: 'error', success: 'check_circle', warning: 'warning' };
   return (
-    <div className={`flex gap-2 p-3 rounded-xl text-body-sm border ${
-      isError
-        ? 'bg-error/10 border-error/20 text-error'
-        : 'bg-emerald-500/10 border-emerald-500/20 text-emerald-300'
-    }`}>
-      <span className="material-symbols-outlined text-[18px]">
-        {isError ? 'error' : 'check_circle'}
+    <div className={`flex gap-2 p-3 rounded-xl text-body-sm border ${styles[type] || styles.error}`}>
+      <span className="material-symbols-outlined text-[18px] flex-shrink-0">
+        {icons[type] || 'error'}
       </span>
-      {message}
+      <span>{message}</span>
     </div>
   );
 }
@@ -80,8 +81,8 @@ function Tab({ id, label, active, onClick }) {
   );
 }
 
-// Defined at module level to prevent input element remounting and losing focus on keystroke.
-function PasswordInput({ id, value, onChange, placeholder = '\u00b7\u00b7\u00b7\u00b7\u00b7\u00b7\u00b7\u00b7', showPassword, setShowPassword }) {
+// Defined at module level to prevent input element remounting on keystroke.
+function PasswordInput({ id, value, onChange, placeholder = '········', showPassword, setShowPassword }) {
   return (
     <div className="relative">
       <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant">
@@ -117,18 +118,35 @@ function PasswordInput({ id, value, onChange, placeholder = '\u00b7\u00b7\u00b7\
 }
 
 export default function LoginPage() {
-  const { login, register, roleOptions, isRoleCatalogLoading, roleCatalogError } = useAuth();
+  const {
+    login, register, roleOptions, isRoleCatalogLoading, roleCatalogError,
+    sessionExpired, user,
+  } = useAuth();
 
-  const [activeTab, setActiveTab] = useState('login');
-  const [email,    setEmail]    = useState('');
+  const [activeTab,        setActiveTab]        = useState('login');
+  const [showPassword,     setShowPassword]     = useState(false);
+  const [confirmPassword,  setConfirmPassword]  = useState('');
+  const [selectedRole,     setSelectedRole]     = useState('sales');
+  const [formError,        setFormError]        = useState('');
+  const [formSuccess,      setFormSuccess]      = useState('');
+  const [isLoading,        setIsLoading]        = useState(false);
+
+  // SESSION EXPIRY FIX:
+  // Pre-fill email from the last known user session when the JWT expired.
+  // This tells the user exactly which account they need to sign into —
+  // preventing the "do I need to re-register?" confusion.
+  const [email,    setEmail]    = useState(() => (sessionExpired && user?.email) ? user.email : '');
   const [password, setPassword] = useState('');
-  const [selectedRole, setSelectedRole] = useState('sales');
-  const [showPassword, setShowPassword] = useState(false);
-  const [confirmPassword, setConfirmPassword] = useState('');
 
-  const [formError,   setFormError]   = useState('');
-  const [formSuccess, setFormSuccess] = useState('');
-  const [isLoading,   setIsLoading]   = useState(false);
+  // Sync email if sessionExpired state arrives asynchronously (token validation
+  // happens in a useEffect in AuthContext, not synchronously).
+  useEffect(() => {
+    if (sessionExpired && user?.email) {
+      setEmail(user.email);
+      // Stay on the login tab — don't redirect to register.
+      setActiveTab('login');
+    }
+  }, [sessionExpired, user?.email]);
 
   useEffect(() => {
     if (roleOptions.length > 0) {
@@ -139,26 +157,6 @@ export default function LoginPage() {
       );
     }
   }, [roleOptions]);
-
-  useEffect(() => {
-    const { body } = document;
-    const previousOverflowX = body.style.overflowX;
-    const previousOverflowY = body.style.overflowY;
-    const previousHeight = body.style.height;
-    const previousMinHeight = body.style.minHeight;
-
-    body.style.overflowX = 'hidden';
-    body.style.overflowY = 'auto';
-    body.style.height = 'auto';
-    body.style.minHeight = '100vh';
-
-    return () => {
-      body.style.overflowX = previousOverflowX;
-      body.style.overflowY = previousOverflowY;
-      body.style.height = previousHeight;
-      body.style.minHeight = previousMinHeight;
-    };
-  }, []);
 
   function switchTab(tab) {
     setActiveTab(tab);
@@ -211,7 +209,10 @@ export default function LoginPage() {
 
   return (
     <main className="flex min-h-screen bg-background overflow-x-hidden overflow-y-auto">
+      {/* ── Left pane: forms ──────────────────────────────────────────────── */}
       <section className="w-full lg:w-[480px] xl:w-[540px] flex flex-col justify-start lg:justify-between gap-6 lg:gap-0 p-6 sm:p-8 md:p-12 z-10 bg-background">
+
+        {/* Logo */}
         <div className="flex items-center gap-3">
           <ShieldLogo size={40} />
           <span className="font-bold text-primary tracking-tight text-xl">QueryShield AI</span>
@@ -227,6 +228,22 @@ export default function LoginPage() {
             </p>
           </header>
 
+          {/* ── SESSION EXPIRED BANNER ───────────────────────────────────
+            * ROOT CAUSE FIX: Previously, token expiry would silently drop
+            * the user back at a blank login form with no explanation. Users
+            * didn't know if their account was gone and often tried to
+            * re-register. This banner clarifies exactly what happened.
+            */}
+          {sessionExpired && (
+            <div className="mb-4">
+              <Alert
+                type="warning"
+                message="Your session has expired. Please sign in again — your account and data are intact."
+              />
+            </div>
+          )}
+
+          {/* Tab switcher */}
           <div className="flex gap-1 p-1 bg-surface-container-low rounded-xl mb-6">
             <Tab id="tab-signin"  label="Sign In"  active={activeTab === 'login'}    onClick={() => switchTab('login')} />
             <Tab id="tab-signup"  label="Sign Up"  active={activeTab === 'register'} onClick={() => switchTab('register')} />
@@ -235,6 +252,7 @@ export default function LoginPage() {
           {formError   && <div className="mb-4"><Alert type="error"   message={formError}   /></div>}
           {formSuccess && <div className="mb-4"><Alert type="success" message={formSuccess} /></div>}
 
+          {/* ── Login form ────────────────────────────────────────────── */}
           {activeTab === 'login' && (
             <form onSubmit={handleLogin} className="space-y-5">
               <div className="space-y-2">
@@ -265,7 +283,6 @@ export default function LoginPage() {
                   <label htmlFor="login-password" className="text-body-sm font-medium text-on-surface-variant uppercase tracking-wider">
                     Password
                   </label>
-                  <a href="#" className="text-body-sm text-primary hover:underline">Forgot password?</a>
                 </div>
                 <PasswordInput
                   id="login-password"
@@ -315,6 +332,7 @@ export default function LoginPage() {
             </form>
           )}
 
+          {/* ── Register form ─────────────────────────────────────────── */}
           {activeTab === 'register' && (
             <form onSubmit={handleRegister} className="space-y-4">
               <div className="space-y-2">
@@ -449,6 +467,7 @@ export default function LoginPage() {
           )}
         </GlassCard>
 
+        {/* Security badges */}
         <div className="flex flex-wrap items-center justify-between gap-4 opacity-50">
           {[
             { icon: 'security',             label: 'JWT AUTH' },
@@ -470,6 +489,7 @@ export default function LoginPage() {
         )}
       </section>
 
+      {/* ── Right pane: decorative visual (desktop only) ──────────────────── */}
       <section className="hidden lg:flex flex-1 relative overflow-hidden">
         <NeuralBackground>
           <div className="w-full max-w-xl px-10 space-y-5">
@@ -528,4 +548,3 @@ export default function LoginPage() {
     </main>
   );
 }
-

@@ -32,6 +32,13 @@ export function AuthProvider({ children }) {
   const [roleLoading, setRoleLoading] = useState(true);
   const [roleError,   setRoleError]   = useState('');
 
+  // SESSION EXPIRY FLAG
+  // When a stored token is found on startup but is rejected by the backend
+  // (expired or revoked), we set this flag so the Login page can display a
+  // clear "Your session has expired — please sign in again" message instead
+  // of silently dropping the user back at a blank login screen.
+  const [sessionExpired, setSessionExpired] = useState(false);
+
   const [authState, setAuthState] = useState(() => {
     try {
       const token = localStorage.getItem(TOKEN_KEY);
@@ -69,12 +76,45 @@ export function AuthProvider({ children }) {
       }
     }
 
+    // ROOT CAUSE FIX — Login Persistence:
+    // On startup, if we have a stored token we validate it with GET /auth/me.
+    // BEFORE this fix: a 401 response (expired token) silently cleared
+    // localStorage and reset auth state with no user-visible explanation.
+    // The user was sent back to the login page with no message, so they thought
+    // their account was deleted and tried to re-register.
+    //
+    // AFTER this fix: we set the `sessionExpired` flag so the Login page can
+    // render a clear "Your session has expired. Please sign in again." banner.
+    // We also preserve the user object in localStorage long enough for the
+    // login page to pre-fill the email field (UX improvement).
     if (authState.token) {
-      getMe(authState.token).catch(() => {
-        localStorage.removeItem(TOKEN_KEY);
-        localStorage.removeItem(USER_KEY);
-        setAuthState({ user: null, role: DEFAULT_ROLE, token: null, isAuthenticated: false });
-      });
+      getMe(authState.token)
+        .then(() => {
+          // Token is still valid — clear any stale expiry flag.
+          if (isActive) setSessionExpired(false);
+        })
+        .catch(() => {
+          if (!isActive) return;
+          // Token is expired or invalid. Mark session as expired, clear token
+          // (we cannot trust it) but keep the user record briefly so the
+          // Login page can pre-fill the email.
+          const storedUser = (() => {
+            try { return JSON.parse(localStorage.getItem(USER_KEY) || 'null'); }
+            catch { return null; }
+          })();
+
+          localStorage.removeItem(TOKEN_KEY);
+          // Keep USER_KEY in localStorage — login page reads it for pre-fill.
+          // It is removed on successful login (replaced) or explicit logout.
+
+          setSessionExpired(true);
+          setAuthState({
+            user: storedUser,    // preserved for email pre-fill on login form
+            role: storedUser?.role || DEFAULT_ROLE,
+            token: null,
+            isAuthenticated: false,
+          });
+        });
     }
 
     loadRoleCatalog();
@@ -108,6 +148,9 @@ export function AuthProvider({ children }) {
       localStorage.setItem(TOKEN_KEY, access_token);
       localStorage.setItem(USER_KEY, JSON.stringify(user));
 
+      // Clear session-expired state on successful login.
+      setSessionExpired(false);
+
       setAuthState({
         user,
         role: normalizeRole(user.role) || user.role,
@@ -138,6 +181,7 @@ export function AuthProvider({ children }) {
   const logout = useCallback(() => {
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(USER_KEY);
+    setSessionExpired(false);
     setAuthState({ user: null, role: getDefaultRole(roleCatalog), token: null, isAuthenticated: false });
   }, [roleCatalog]);
 
@@ -151,6 +195,7 @@ export function AuthProvider({ children }) {
       user:                 authState.user,
       role:                 authState.role,
       token:                authState.token,
+      sessionExpired,
       roleLabel:            roleDefinition?.label      ?? getRoleLabel(authState.role),
       roleBadgeClass:       roleDefinition?.badgeClass ?? getRoleBadgeClass(authState.role),
       isAuthenticated:      authState.isAuthenticated,
@@ -170,6 +215,7 @@ export function AuthProvider({ children }) {
       authState.role,
       authState.token,
       authState.isAuthenticated,
+      sessionExpired,
       roleDefinition,
       roleLoading,
       roleError,
